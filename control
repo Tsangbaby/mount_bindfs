@@ -1,0 +1,9 @@
+Package: com.nan.bindfs
+Name: mount_bindfs
+Version: 0.7.0
+Architecture: iphoneos-arm64
+Description: bindfs mount tool
+Maintainer: zhaonan
+Author: zhaonan
+Section: System
+Depends: firmware (>= 14.0), preferenceloader
