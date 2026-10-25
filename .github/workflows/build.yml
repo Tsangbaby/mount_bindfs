@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Procursus
+        uses: dhinakg/procursus-action@main
+        with:
+          packages: ldid make
+
+      - name: Install better GNU Make
+        run: |
+          brew install make
+          echo "PATH=$(brew --prefix make)/libexec/gnubin:$PATH" >> $GITHUB_ENV
+
+      - name: Install RootHide Theos
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos)"
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$HOME/theos/bin" >> $GITHUB_PATH
+
+      - name: Download iOS SDK
+        run: |
+          mkdir -p $HOME/theos/sdks
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/xybp888/iOS-SDKs.git $HOME/iOS-SDKs
+          cd $HOME/iOS-SDKs
+          git sparse-checkout set iPhoneOS18.6.sdk
+          cp -R iPhoneOS18.6.sdk $HOME/theos/sdks/
+          ls $HOME/theos/sdks
+
+      - name: Build roothide
+        run: |
+          export THEOS=$HOME/theos
+          make clean || true
+          make package SCHEME=roothide
+          mkdir -p out/roothide
+          cp packages/*.deb out/roothide/
+
+      - name: Build rootless
+        run: |
+          export THEOS=$HOME/theos
+          make clean || true
+          make package SCHEME=rootless
+          mkdir -p out/rootless
+          cp packages/*.deb out/rootless/
+
+      - name: Upload roothide
+        uses: actions/upload-artifact@v4
+        with:
+          name: mount_bindfs-roothide
+          path: out/roothide/
+
+      - name: Upload rootless
+        uses: actions/upload-artifact@v4
+        with:
+          name: mount_bindfs-rootless
+          path: out/rootless/
