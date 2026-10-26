@@ -2,6 +2,9 @@ name: Build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feat/preferences-icon-20261026
 
 jobs:
   build:
